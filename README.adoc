@@ -315,6 +315,158 @@ Note that the type used for prefixing the statement name is the name of the aggr
 
 You can customize the namespace part of a statement name using https://github.com/spring-projects/spring-data-jdbc/blob/master/src/main/java/org/springframework/data/jdbc/mybatis/NamespaceStrategy.java[`NamespaceStrategy`].
 
+
+=== R2DBC
+
+R2DBC is the abbreviation for https://github.com/r2dbc/[Reactive Relational Database Connectivity], an experiment to integrate relational databases using a reactive driver.
+
+The state of R2DBC is experimental to evaluate how an reactive integration could look like. To get started, you need a R2DBC driver first. Currently, https://github.com/r2dbc/r2dbc-postgresql[PostgreSQL] is the only available driver. All functionality is encapsulated in `DatabaseClient`:
+
+[source,java]
+----
+PostgresqlConnectionFactory connectionFactory = new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
+		.host(…)
+		.database(…)
+		.username(…)
+		.password(…).build());
+
+DatabaseClient databaseClient = DatabaseClient.create(connectionFactory);
+----
+
+The client API provides covers the following features:
+
+* Execution of generic SQL and consumption of update count/row results.
+* Generic `SELECT` with paging and ordering.
+* `SELECT` of mapped objects with paging and ordering.
+* Generic `INSERT` with parameter binding.
+* `INSERT` of mapped objects.
+* Parameter binding using the native syntax.
+* Result consumption: Update count, unmapped (`Map<String, Object>`), mapped to entities, extraction function.
+* Reactive repositories using `@Query` annotated methods.
+* Transaction Management.
+
+==== Examples executing generic SQL statements
+
+[source,java]
+----
+Mono<Integer> count = databaseClient.execute()
+				.sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)")
+				.bind("$1", 42055)
+				.bind("$2", "Description")
+				.bindNull("$3", Integer.class)
+				.fetch()
+				.rowsUpdated();
+
+Flux<Map<String, Object>> rows = databaseClient.execute()
+				.sql("SELECT id, name, manual FROM legoset")
+				.fetch().all();
+
+Flux<Long> result = db.execute()
+				.sql("SELECT txid_current();")
+				.exchange()
+				.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
+----
+
+==== Examples selecting data
+
+[source,java]
+----
+
+Flux<Map<String, Object>> rows = databaseClient.select()
+				.from("legoset")
+				.orderBy(Sort.by(desc("id")))
+				.fetch()
+				.all();
+
+Flux<LegoSet> rows = databaseClient.select()
+				.from("legoset")
+				.orderBy(Sort.by(desc("id")))
+				.as(LegoSet.class)
+				.fetch()
+				.all();
+----
+
+==== Examples inserting data
+
+[source,java]
+----
+Flux<Integer> ids = databaseClient.insert()
+				.into("legoset")
+				.value("id", 42055)
+				.value("name", "Description")
+				.nullValue("manual", Integer.class)
+				.exchange() //
+				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all())
+
+Flux<Integer> ids = databaseClient.insert()
+				.into(LegoSet.class)
+				.using(legoSet)
+				.exchange()
+				.flatMapMany(it -> it.extract((r, m) -> r.get("id", Integer.class)).all())
+----
+
+==== Examples using reactive repositories
+
+[source,java]
+----
+interface LegoSetRepository extends ReactiveCrudRepository<LegoSet, Integer> {
+
+		@Query("SELECT * FROM legoset WHERE name like $1")
+		Flux<LegoSet> findByNameContains(String name);
+
+		@Query("SELECT * FROM legoset WHERE manual = $1")
+		Mono<LegoSet> findByManual(int manual);
+}
+----
+
+==== Examples using transaction control
+
+All examples above run with auto-committed transactions. To get group multiple statements within the same transaction or
+control the transaction yourself, you need to use `TransactionalDatabaseClient`:
+
+[source,java]
+----
+TransactionalDatabaseClient databaseClient = TransactionalDatabaseClient.create(connectionFactory);
+----
+
+`TransactionalDatabaseClient` allows multiple flavors of transaction management:
+
+* Participate in ongoing transactions and fall-back to auto-commit mode if there's no active transaction (default).
+* Group multiple statements in a managed transaction using `TransactionalDatabaseClient.inTransaction(…)`.
+* Application-controlled transaction management using `TransactionalDatabaseClient.beginTransaction()`/`commitTransaction()`/`rollbackTransaction()`.
+
+Participating in ongoing transactions does not require changes to your application code. Instead, a managed transaction must be hosted by your application container. Transaction control needs to happen there, as well.
+
+**Statement grouping**
+
+[source,java]
+----
+Flux<Integer> rowsUpdated = databaseClient.inTransaction(db -> {
+
+	return db.execute().sql("INSERT INTO legoset (id, name, manual) VALUES($1, $2, $3)") //
+			.bind(0, 42055) //
+			.bind(1, "Description") //
+			.bindNull("$3", Integer.class) //
+			.fetch()
+			.rowsUpdated();
+});
+----
+
+**Application-controlled transaction management**
+
+[source,java]
+----
+Flux<Long> txId = databaseClient.execute().sql("SELECT txid_current();").exchange()
+				.flatMapMany(it -> it.extract((r, md) -> r.get(0, Long.class)).all());
+
+Mono<Void> then = databaseClient.enableTransactionSynchronization(databaseClient.beginTransaction() //
+				.thenMany(txId)) //
+				.then(databaseClient.rollbackTransaction()));
+----
+
+NOTE: Application-controlled transactions must be enabled with `enableTransactionSynchronization(…)`.
+
+
 == Features planned for the not too distant future
 
 === Advanced query annotation support
