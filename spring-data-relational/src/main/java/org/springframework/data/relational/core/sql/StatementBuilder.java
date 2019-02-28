@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql;
 import java.util.Collection;
 
 import org.springframework.data.relational.core.sql.DeleteBuilder.DeleteWhere;
+import org.springframework.data.relational.core.sql.InsertBuilder.InsertIntoColumnsAndValues;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 
 /**
@@ -33,7 +34,7 @@ import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 public abstract class StatementBuilder {
 
 	/**
-	 * Creates a new {@link SelectBuilder} by specifying a {@code SELECT} column.
+	 * Creates a new {@link SelectBuilder} and includes the {@code SELECT} columns.
 	 *
 	 * @param expression the select list expression.
 	 * @return the {@link SelectBuilder} containing {@link Expression}.
@@ -44,7 +45,7 @@ public abstract class StatementBuilder {
 	}
 
 	/**
-	 * Creates a new {@link SelectBuilder} by specifying one or more {@code SELECT} columns.
+	 * Creates a new {@link SelectBuilder} and includes one or more {@code SELECT} columns.
 	 *
 	 * @param expressions the select list expressions.
 	 * @return the {@link SelectBuilder} containing {@link Expression}s.
@@ -55,7 +56,7 @@ public abstract class StatementBuilder {
 	}
 
 	/**
-	 * Include one or more {@link Expression}s in the select list.
+	 * Creates a new {@link SelectBuilder} and includes one or more {@link Expression}s in the select list.
 	 *
 	 * @param expressions the expressions to include.
 	 * @return the {@link SelectBuilder} containing {@link Expression}s.
@@ -76,7 +77,7 @@ public abstract class StatementBuilder {
 	}
 
 	/**
-	 * Declare the {@link Table} to delete from.
+	 * Creates a new {@link DeleteBuilder} and declares the {@link Table} to delete from.
 	 *
 	 * @param table the table to delete from.
 	 * @return {@code this} builder.
@@ -87,7 +88,7 @@ public abstract class StatementBuilder {
 	}
 
 	/**
-	 * Creates a new {@link DeleteBuilder}.
+	 * Creates a a new {@link DeleteBuilder}.
 	 *
 	 * @return the new {@link DeleteBuilder}.
 	 * @see DeleteBuilder
@@ -96,7 +97,26 @@ public abstract class StatementBuilder {
 		return Delete.builder();
 	}
 
-	private StatementBuilder() {
-
+	/**
+	 * Creates a a new {@link InsertBuilder} and declare the {@link Table} to insert into.
+	 *
+	 * @param table the table to insert into.
+	 * @return {@code this} builder.
+	 * @see Table#columns(String...)
+	 */
+	public static InsertIntoColumnsAndValues insert(Table table) {
+		return Insert.builder().into(table);
 	}
+
+	/**
+	 * Creates a new {@link InsertBuilder}.
+	 *
+	 * @return the new {@link InsertBuilder}.
+	 * @see InsertBuilder
+	 */
+	public static InsertBuilder insert() {
+		return Insert.builder();
+	}
+
+	private StatementBuilder() {}
 }

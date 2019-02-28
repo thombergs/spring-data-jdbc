@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Delete;
+import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Select;
 
 /**
@@ -32,6 +33,13 @@ public interface Renderer {
 	 * @return the rendered statement.
 	 */
 	String render(Select select);
+
+	/**
+	 * Render the {@link Insert} AST into a SQL statement.
+	 *
+	 * @return the rendered statement.
+	 */
+	String render(Insert insert);
 
 	/**
 	 * Render the {@link Delete} AST into a SQL statement.

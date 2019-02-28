@@ -16,6 +16,7 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Delete;
+import org.springframework.data.relational.core.sql.Insert;
 import org.springframework.data.relational.core.sql.Select;
 import org.springframework.util.Assert;
 
@@ -68,6 +69,16 @@ public class SqlRenderer implements Renderer {
 	}
 
 	/**
+	 * Renders a {@link Insert} statement into its SQL representation.
+	 *
+	 * @param insert must not be {@literal null}.
+	 * @return the rendered statement.
+	 */
+	public static String toString(Insert insert) {
+		return create().render(insert);
+	}
+
+	/**
 	 * Renders a {@link Delete} statement into its SQL representation.
 	 *
 	 * @param delete must not be {@literal null}.
@@ -87,6 +98,20 @@ public class SqlRenderer implements Renderer {
 
 		SelectStatementVisitor visitor = new SelectStatementVisitor(context);
 		select.visit(visitor);
+
+		return visitor.getRenderedPart().toString();
+	}
+
+	/**
+	 * Render the {@link Select} AST into a SQL statement.
+	 *
+	 * @return the rendered statement.
+	 */
+	@Override
+	public String render(Insert insert) {
+
+		InsertStatementVisitor visitor = new InsertStatementVisitor(context);
+		insert.visit(visitor);
 
 		return visitor.getRenderedPart().toString();
 	}
