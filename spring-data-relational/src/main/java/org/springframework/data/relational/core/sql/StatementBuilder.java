@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.Collection;
 
+import org.springframework.data.relational.core.sql.DeleteBuilder.DeleteWhere;
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 
 /**
@@ -57,7 +58,7 @@ public abstract class StatementBuilder {
 	 * Include one or more {@link Expression}s in the select list.
 	 *
 	 * @param expressions the expressions to include.
-	 * @return {@code this} builder.
+	 * @return the {@link SelectBuilder} containing {@link Expression}s.
 	 * @see Table#columns(String...)
 	 */
 	public static SelectAndFrom select(Collection<? extends Expression> expressions) {
@@ -72,6 +73,27 @@ public abstract class StatementBuilder {
 	 */
 	public static SelectBuilder select() {
 		return Select.builder();
+	}
+
+	/**
+	 * Declare the {@link Table} to delete from.
+	 *
+	 * @param table the table to delete from.
+	 * @return {@code this} builder.
+	 * @see Table#columns(String...)
+	 */
+	public static DeleteWhere delete(Table table) {
+		return Delete.builder().from(table);
+	}
+
+	/**
+	 * Creates a new {@link DeleteBuilder}.
+	 *
+	 * @return the new {@link DeleteBuilder}.
+	 * @see DeleteBuilder
+	 */
+	public static DeleteBuilder delete() {
+		return Delete.builder();
 	}
 
 	private StatementBuilder() {

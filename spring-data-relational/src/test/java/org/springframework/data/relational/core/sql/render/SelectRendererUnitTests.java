@@ -34,7 +34,7 @@ import org.springframework.util.StringUtils;
  * @author Mark Paluch
  * @author Jens Schauder
  */
-public class SqlRendererUnitTests {
+public class SelectRendererUnitTests {
 
 	@Test // DATAJDBC-309
 	public void shouldRenderSingleColumn() {
@@ -260,14 +260,14 @@ public class SqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(foo).where(bar.isEqualTo(baz)).build();
 
-		String upper = SqlRenderer.create(select, new SimpleRenderContext(NamingStrategies.toUpper())).render();
+		String upper = SqlRenderer.create(new SimpleRenderContext(NamingStrategies.toUpper())).renderStatement(select);
 		assertThat(upper).isEqualTo("SELECT FOO.BAR FROM FOO WHERE FOO.BAR = FOO.BAZ");
 
-		String lower = SqlRenderer.create(select, new SimpleRenderContext(NamingStrategies.toLower())).render();
+		String lower = SqlRenderer.create(new SimpleRenderContext(NamingStrategies.toLower())).renderStatement(select);
 		assertThat(lower).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = foo.baz");
 
-		String mapped = SqlRenderer
-				.create(select, new SimpleRenderContext(NamingStrategies.mapWith(StringUtils::uncapitalize))).render();
+		String mapped = SqlRenderer.create(new SimpleRenderContext(NamingStrategies.mapWith(StringUtils::uncapitalize)))
+				.renderStatement(select);
 		assertThat(mapped).isEqualTo("SELECT foo.baR FROM foo WHERE foo.baR = foo.baZ");
 	}
 
