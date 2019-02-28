@@ -37,7 +37,7 @@ public class DeleteRendererUnitTests {
 
 		Delete delete = Delete.builder().from(bar).build();
 
-		assertThat(SqlRenderer.render(delete)).isEqualTo("DELETE FROM bar");
+		assertThat(SqlRenderer.toString(delete)).isEqualTo("DELETE FROM bar");
 	}
 
 	@Test // DATAJDBC-335
@@ -48,7 +48,7 @@ public class DeleteRendererUnitTests {
 		Delete delete = Delete.builder().from(table).where(table.column("foo").isEqualTo(table.column("baz")))
 				.and(table.column("doe").isNull()).build();
 
-		assertThat(SqlRenderer.render(delete)).isEqualTo("DELETE FROM bar WHERE bar.foo = bar.baz AND bar.doe IS NULL");
+		assertThat(SqlRenderer.toString(delete)).isEqualTo("DELETE FROM bar WHERE bar.foo = bar.baz AND bar.doe IS NULL");
 	}
 
 	@Test // DATAJDBC-335
@@ -58,6 +58,6 @@ public class DeleteRendererUnitTests {
 
 		Delete delete = Delete.builder().from(table).where(table.column("foo").isEqualTo(table.column("baz"))).build();
 
-		assertThat(SqlRenderer.render(delete)).isEqualTo("DELETE FROM bar AS my_bar WHERE my_bar.foo = my_bar.baz");
+		assertThat(SqlRenderer.toString(delete)).isEqualTo("DELETE FROM bar AS my_bar WHERE my_bar.foo = my_bar.baz");
 	}
 }

@@ -27,7 +27,7 @@ import org.springframework.util.Assert;
  * @since 1.1
  * @see RenderContext
  */
-public class SqlRenderer {
+public class SqlRenderer implements Renderer {
 
 	private final RenderContext context;
 
@@ -63,8 +63,8 @@ public class SqlRenderer {
 	 * @param select must not be {@literal null}.
 	 * @return the rendered statement.
 	 */
-	public static String render(Select select) {
-		return create().renderStatement(select);
+	public static String toString(Select select) {
+		return create().render(select);
 	}
 
 	/**
@@ -73,8 +73,8 @@ public class SqlRenderer {
 	 * @param delete must not be {@literal null}.
 	 * @return the rendered statement.
 	 */
-	public static String render(Delete delete) {
-		return create().renderStatement(delete);
+	public static String toString(Delete delete) {
+		return create().render(delete);
 	}
 
 	/**
@@ -82,7 +82,8 @@ public class SqlRenderer {
 	 *
 	 * @return the rendered statement.
 	 */
-	public String renderStatement(Select select) {
+	@Override
+	public String render(Select select) {
 
 		SelectStatementVisitor visitor = new SelectStatementVisitor(context);
 		select.visit(visitor);
@@ -95,7 +96,8 @@ public class SqlRenderer {
 	 *
 	 * @return the rendered statement.
 	 */
-	public String renderStatement(Delete delete) {
+	@Override
+	public String render(Delete delete) {
 
 		DeleteStatementVisitor visitor = new DeleteStatementVisitor(context);
 		delete.visit(visitor);
